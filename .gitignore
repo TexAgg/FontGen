@@ -1,0 +1,18 @@
+# All of the data files.
+*.hdf5
+# The fonts.
+#*.ttf
+create_dataset.py
+
+*.nb
+img/
+*.pyc
+
+# Scripts for connecting to the remote server.
+*.sh
+source.tar
+
+.vscode/
+paper.pdf
+keys.7z
+numbers.zip
