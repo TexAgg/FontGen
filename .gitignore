@@ -6,6 +6,7 @@ create_dataset.py
 
 *.nb
 img/
+out/
 *.pyc
 
 # Scripts for connecting to the remote server.
@@ -14,5 +15,6 @@ source.tar
 
 .vscode/
 paper.pdf
+keys
 keys.7z
 numbers.zip

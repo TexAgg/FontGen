@@ -1,5 +1,7 @@
 # http://bit.ly/2BBoAC8
 # pip wheel -r requirements.txt -w dep
+#
+# FontGen only works with Python 2.7, so you might have to use pip2 instead.
 
 tensorflow
 h5py==2.*
