@@ -4,7 +4,7 @@
 #*.ttf
 create_dataset.py
 
-*.nb
+#*.nb
 img/
 out/
 *.pyc
