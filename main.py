@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense, Conv2D, Flatten, Reshape, Dropout, AveragePooling2D, Merge
+from keras.models import Sequential, Model
+from keras.layers import Dense, Conv2D, Flatten, Reshape, Dropout, GlobalAveragePooling2D, Merge, Concatenate, Input, concatenate, MaxPooling2D
 from keras.utils import plot_model
 import os
 import font_encoder
@@ -12,38 +12,32 @@ num_neurons = 4 * letter_width**2
 
 data = h5py.File('fonts.small.hdf5')['fonts']
 
-b_branch = Sequential()
-b_branch.add(Conv2D(2, (4,4), activation='relu', input_shape=(64,64,1), padding='same'))
-#b_branch.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-#b_branch.add(Dropout(0.25))
+# http://bit.ly/2BI7srh
+b_input = Input(shape=(64,64,1))
+b_branch = Conv2D(4, (4,4), activation='relu')(b_input)
+b_branch = MaxPooling2D(pool_size=(3, 3))(b_branch)
 
-a_branch = Sequential()
-a_branch.add(Conv2D(2, (4,4), activation='relu', input_shape=(64,64,1),padding='same'))
-#a_branch.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-#a_branch.add(Dropout(0.25))
+a_input = Input(shape=(64,64,1))
+a_branch = Conv2D(4, (4,4), activation='relu')(a_input)
+a_branch = MaxPooling2D(pool_size=(3, 3))(a_branch)
 
-s_branch = Sequential()
-s_branch.add(Conv2D(2, (4,4), activation='relu', input_shape=(64,64,1), padding='same'))
-#s_branch.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-#s_branch.add(Dropout(0.25))
+s_input = Input(shape=(64,64,1))
+s_branch = Conv2D(4, (4,4), activation='relu')(s_input)
+s_branch = MaxPooling2D(pool_size=(3, 3))(s_branch)
 
-q_branch = Sequential()
-q_branch.add(Conv2D(2, (4,4), activation='relu', input_shape=(64,64,1), padding='same'))
-#q_branch.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-#q_branch.add(Dropout(0.25))
+q_input = Input(shape=(64,64,1))
+q_branch = Conv2D(4, (4,4), activation='relu')(q_input)
+q_branch = MaxPooling2D(pool_size=(3, 3))(q_branch)
 
-# http://bit.ly/2lajrqn
-merged = Merge([b_branch, a_branch, s_branch, q_branch], mode='concat')
+merged = concatenate([b_branch, a_branch, s_branch, q_branch])
+# http://bit.ly/2pG3Pk2
+merged = GlobalAveragePooling2D()(merged)
+merged = Dense(62*64*64, activation='sigmoid')(merged)
+merged = Reshape((62,64,64))(merged)
+
+model = Model(inputs=[b_input, a_input, s_input, q_input], output=merged)
 
 # Create the network.
-model = Sequential()
-model.add(merged)
-model.add(Conv2D(4,(3,3), activation='relu', padding='same'))
-#model.add(AveragePooling2D(pool_size=(3, 3), padding='same'))
-#model.add(Flatten())
-model.add(Dense(62, activation='sigmoid'))
-model.add(Dropout(0.25))
-model.add(Reshape((62, 64, 64)))
 model.compile(optimizer='sgd', metrics=['accuracy'], loss='mse')
 
 b_inputs = []
