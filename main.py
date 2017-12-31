@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 from keras.models import Sequential, Model
-from keras.layers import Dense, Conv2D, Flatten, Reshape, Dropout, GlobalAveragePooling2D, Merge, Concatenate, Input, concatenate, MaxPooling2D
+from keras.layers import Dense, Conv2D, Flatten, Reshape, Dropout, GlobalAveragePooling2D, Merge, Concatenate, Input, concatenate, MaxPooling2D, AveragePooling2D
 from keras.utils import plot_model
 import os
 import font_encoder
@@ -10,39 +10,41 @@ num_chars = 62
 letter_width = 64
 num_neurons = 4 * letter_width**2
 
-data = h5py.File('fonts.hdf5')['fonts']
+data = h5py.File('fonts.small.hdf5')['fonts']
 
-entry_dropout = 0.5
-entry_pool_size = 4
-entry_num_filters = 6
+entry_dropout = 0.75
+entry_pool_size = 2
+entry_num_filters = 10
 
 # http://bit.ly/2BI7srh
-b_input = Input(shape=(64,64,1))
-b_branch = Conv2D(entry_num_filters, (5,5), activation='relu')(b_input)
+b_input = Input(shape=(64, 64, 1))
+b_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(b_input)
 b_branch = MaxPooling2D(pool_size=entry_pool_size)(b_branch)
-#b_branch = Dropout(entry_dropout)(b_branch)
+b_branch = Dropout(entry_dropout)(b_branch)
 
-a_input = Input(shape=(64,64,1))
-a_branch = Conv2D(entry_num_filters, (5,5), activation='relu')(a_input)
+a_input = Input(shape=(64, 64, 1))
+a_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(a_input)
 a_branch = MaxPooling2D(pool_size=entry_pool_size)(a_branch)
-#a_branch = Dropout(entry_dropout)(a_branch)
+a_branch = Dropout(entry_dropout)(a_branch)
 
-s_input = Input(shape=(64,64,1))
-s_branch = Conv2D(entry_num_filters, (5,5), activation='relu')(s_input)
+s_input = Input(shape=(64, 64, 1))
+s_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(s_input)
 s_branch = MaxPooling2D(pool_size=entry_pool_size)(s_branch)
-#s_branch = Dropout(entry_dropout)(s_branch)
+s_branch = Dropout(entry_dropout)(s_branch)
 
-q_input = Input(shape=(64,64,1))
-q_branch = Conv2D(entry_num_filters, (5,5), activation='relu')(q_input)
+q_input = Input(shape=(64, 64, 1))
+q_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(q_input)
 q_branch = MaxPooling2D(pool_size=entry_pool_size)(q_branch)
-#q_branch = Dropout(entry_dropout)(q_branch)
+q_branch = Dropout(entry_dropout)(q_branch)
 
 merged = concatenate([b_branch, a_branch, s_branch, q_branch])
-# http://bit.ly/2pG3Pk2
+merged = Conv2D(8, (8,8), activation='relu')(merged)
+merged = MaxPooling2D(pool_size=(4, 4))(merged)
+merged = Dropout(0.75)(merged)
 merged = GlobalAveragePooling2D()(merged)
-#merged = Flatten()(merged)
 merged = Dense(62*64*64, activation='sigmoid')(merged)
-merged = Reshape((62,64,64))(merged)
+merged = Dropout(0.75)(merged)
+merged = Reshape((62, 64, 64))(merged)
 
 model = Model(inputs=[b_input, a_input, s_input, q_input], output=merged)
 
@@ -56,10 +58,10 @@ q_inputs = []
 outputs = []
 
 for font in data:
-	input_B = font[1].reshape(64,64,1)
-	input_A = font[0].reshape(64,64,1)
-	input_S = font[18].reshape(64,64,1)
-	input_Q = font[16].reshape(64,64,1)
+	input_B = font[1].reshape(64, 64, 1)
+	input_A = font[0].reshape(64, 64, 1)
+	input_S = font[18].reshape(64, 64, 1)
+	input_Q = font[16].reshape(64, 64, 1)
 
 	# Now we need to flatten these fonts into one long numpy array.
 	input_chars = np.array([input_B, input_A, input_S, input_Q])
@@ -76,21 +78,22 @@ s_inputs = np.array(s_inputs)
 q_inputs = np.array(q_inputs)
 outputs = np.array(outputs)
 
-model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=10)
+# It usually plateaus around 4.
+model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=8)
 # Save the model.
 model.save_weights("model.hdf5")
 
-print model.output_shape
+#print model.output_shape
 
-# Plot the model so I can see what the hell is going on.
+# Plot the model so I can see what is going on.
 if not os.path.exists("img"):
 	os.makedirs("img")
-plot_model(model, to_file='img/model.png', show_shapes=True)
-plot_model(model, to_file='img/model.svg', show_shapes=True)
+plot_model(model, to_file='img/model.png')
+plot_model(model, to_file='img/model.svg')
 
 # Read and encode the test font.
 test_font = font_encoder.read_font("UbuntuMono-R.ttf")
-test_input = np.array([test_font[1].reshape(1,64,64,1), test_font[0].reshape(1,64,64,1), test_font[18].reshape(1,64, 64, 1), test_font[16].reshape(1,64, 64, 1)])
+test_input = np.array([test_font[1].reshape(1, 64, 64, 1), test_font[0].reshape(1, 64, 64, 1), test_font[18].reshape(1, 64, 64, 1), test_font[16].reshape(1, 64, 64, 1)])
 #print test_input.shape
 
 # Run the model on the test input.
