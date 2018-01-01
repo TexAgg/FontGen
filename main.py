@@ -10,40 +10,40 @@ num_chars = 62
 letter_width = 64
 num_neurons = 4 * letter_width**2
 
-data = h5py.File('fonts.small.hdf5')['fonts']
+data = h5py.File('fonts.hdf5')['fonts']
 
-entry_dropout = 0.75
-entry_pool_size = 2
-entry_num_filters = 10
+entry_dropout = 0.5
+entry_pool_size = 4
+entry_num_filters = 8
 
 # http://bit.ly/2BI7srh
 b_input = Input(shape=(64, 64, 1))
 b_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(b_input)
 b_branch = MaxPooling2D(pool_size=entry_pool_size)(b_branch)
-b_branch = Dropout(entry_dropout)(b_branch)
+#b_branch = Dropout(entry_dropout)(b_branch)
 
 a_input = Input(shape=(64, 64, 1))
 a_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(a_input)
 a_branch = MaxPooling2D(pool_size=entry_pool_size)(a_branch)
-a_branch = Dropout(entry_dropout)(a_branch)
+#a_branch = Dropout(entry_dropout)(a_branch)
 
 s_input = Input(shape=(64, 64, 1))
 s_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(s_input)
 s_branch = MaxPooling2D(pool_size=entry_pool_size)(s_branch)
-s_branch = Dropout(entry_dropout)(s_branch)
+#s_branch = Dropout(entry_dropout)(s_branch)
 
 q_input = Input(shape=(64, 64, 1))
 q_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(q_input)
 q_branch = MaxPooling2D(pool_size=entry_pool_size)(q_branch)
-q_branch = Dropout(entry_dropout)(q_branch)
+#q_branch = Dropout(entry_dropout)(q_branch)
 
 merged = concatenate([b_branch, a_branch, s_branch, q_branch])
-merged = Conv2D(8, (8,8), activation='relu')(merged)
+merged = Conv2D(10, (4,4), activation='relu')(merged)
 merged = MaxPooling2D(pool_size=(4, 4))(merged)
-merged = Dropout(0.75)(merged)
+#merged = Dropout(0.5)(merged)
 merged = GlobalAveragePooling2D()(merged)
 merged = Dense(62*64*64, activation='sigmoid')(merged)
-merged = Dropout(0.75)(merged)
+#merged = Dropout(0.5)(merged)
 merged = Reshape((62, 64, 64))(merged)
 
 model = Model(inputs=[b_input, a_input, s_input, q_input], output=merged)
@@ -78,8 +78,7 @@ s_inputs = np.array(s_inputs)
 q_inputs = np.array(q_inputs)
 outputs = np.array(outputs)
 
-# It usually plateaus around 4.
-model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=8)
+model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=150)
 # Save the model.
 model.save_weights("model.hdf5")
 
