@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 from keras.models import Sequential, Model
-from keras.layers import Dense, Conv2D, Flatten, Reshape, Dropout, GlobalAveragePooling2D, Merge, Concatenate, Input, concatenate, MaxPooling2D, AveragePooling2D
+from keras.layers import Dense, Conv2D, Flatten, Reshape, Dropout, GlobalAveragePooling2D, Merge, Concatenate, Input, concatenate, MaxPooling2D, AveragePooling2D, BatchNormalization
 from keras.utils import plot_model
 import os
 import font_encoder
@@ -12,38 +12,39 @@ num_neurons = 4 * letter_width**2
 
 data = h5py.File('fonts.hdf5')['fonts']
 
-entry_dropout = 0.5
+entry_dropout = 0.1
 entry_pool_size = 4
 entry_num_filters = 8
 
 # http://bit.ly/2BI7srh
 b_input = Input(shape=(64, 64, 1))
 b_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(b_input)
-b_branch = MaxPooling2D(pool_size=entry_pool_size)(b_branch)
+#b_branch = MaxPooling2D(pool_size=entry_pool_size)(b_branch)
 #b_branch = Dropout(entry_dropout)(b_branch)
 
 a_input = Input(shape=(64, 64, 1))
 a_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(a_input)
-a_branch = MaxPooling2D(pool_size=entry_pool_size)(a_branch)
+#a_branch = MaxPooling2D(pool_size=entry_pool_size)(a_branch)
 #a_branch = Dropout(entry_dropout)(a_branch)
 
 s_input = Input(shape=(64, 64, 1))
 s_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(s_input)
-s_branch = MaxPooling2D(pool_size=entry_pool_size)(s_branch)
+#s_branch = MaxPooling2D(pool_size=entry_pool_size)(s_branch)
 #s_branch = Dropout(entry_dropout)(s_branch)
 
 q_input = Input(shape=(64, 64, 1))
 q_branch = Conv2D(entry_num_filters, (4,4), activation='relu')(q_input)
-q_branch = MaxPooling2D(pool_size=entry_pool_size)(q_branch)
+#q_branch = MaxPooling2D(pool_size=entry_pool_size)(q_branch)
 #q_branch = Dropout(entry_dropout)(q_branch)
 
 merged = concatenate([b_branch, a_branch, s_branch, q_branch])
 merged = Conv2D(10, (4,4), activation='relu')(merged)
-merged = MaxPooling2D(pool_size=(4, 4))(merged)
-#merged = Dropout(0.5)(merged)
+#merged = MaxPooling2D(pool_size=(2, 2))(merged)
+#merged = Dropout(0.1)(merged)
 merged = GlobalAveragePooling2D()(merged)
 merged = Dense(62*64*64, activation='sigmoid')(merged)
-#merged = Dropout(0.5)(merged)
+merged = BatchNormalization()(merged)
+#merged = Dropout(0.1)(merged)
 merged = Reshape((62, 64, 64))(merged)
 
 model = Model(inputs=[b_input, a_input, s_input, q_input], output=merged)
@@ -78,7 +79,7 @@ s_inputs = np.array(s_inputs)
 q_inputs = np.array(q_inputs)
 outputs = np.array(outputs)
 
-model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=150)
+model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=10)
 # Save the model.
 model.save_weights("model.hdf5")
 
@@ -87,8 +88,8 @@ model.save_weights("model.hdf5")
 # Plot the model so I can see what is going on.
 if not os.path.exists("img"):
 	os.makedirs("img")
-plot_model(model, to_file='img/model.png')
-plot_model(model, to_file='img/model.svg')
+plot_model(model, to_file='img/model.png', show_shapes=True)
+plot_model(model, to_file='img/model.svg', show_shapes=True)
 
 # Read and encode the test font.
 test_font = font_encoder.read_font("UbuntuMono-R.ttf")
