@@ -3,6 +3,8 @@
 # The fonts.
 #*.ttf
 create_dataset.py
+history.ods
+.~lock.*
 
 #*.nb
 img/

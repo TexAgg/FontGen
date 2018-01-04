@@ -40,11 +40,9 @@ q_branch = Dropout(entry_dropout)(q_branch)
 merged = concatenate([b_branch, a_branch, s_branch, q_branch])
 merged = Conv2D(10, (4,4), activation='relu')(merged)
 merged = MaxPooling2D(pool_size=(4, 4))(merged)
-#merged = Dropout(0.1)(merged)
 merged = GlobalAveragePooling2D()(merged)
 merged = Dense(62*64*64, activation='sigmoid')(merged)
 merged = BatchNormalization()(merged)
-#merged = Dropout(0.1)(merged)
 merged = Reshape((62, 64, 64))(merged)
 
 model = Model(inputs=[b_input, a_input, s_input, q_input], output=merged)
@@ -79,7 +77,7 @@ s_inputs = np.array(s_inputs)
 q_inputs = np.array(q_inputs)
 outputs = np.array(outputs)
 
-model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=10)
+model.fit([b_inputs, a_inputs, s_inputs, q_inputs], outputs, epochs=70)
 # Save the model.
 model.save_weights("model.hdf5")
 
