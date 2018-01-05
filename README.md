@@ -12,7 +12,7 @@ pip install -r requirements.txt
 ```
 and then, with Python 2.7, run
 ```
-python main.py
+python training.py
 ```
 You'll want to make sure you have the data downloaded as well.
 

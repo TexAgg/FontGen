@@ -47,6 +47,10 @@ merged = Reshape((62, 64, 64))(merged)
 
 model = Model(inputs=[b_input, a_input, s_input, q_input], output=merged)
 
+# Save the architecture as a JSON file.
+with open("model.json", "w") as f:
+	f.write(model.to_json())
+
 # Create the network.
 model.compile(optimizer='sgd', metrics=['accuracy'], loss='mse')
 
