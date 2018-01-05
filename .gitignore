@@ -2,6 +2,7 @@
 *.hdf5
 # The fonts.
 #*.ttf
+*.ttx
 create_dataset.py
 history.ods
 .~lock.*
